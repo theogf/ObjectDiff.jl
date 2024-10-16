@@ -62,23 +62,23 @@ end
 Base.first((; x)::BitsDiff) = x
 Base.last((; y)::BitsDiff) = y
 
-struct FieldDiff{T<:AbstractDiff} <: AbstractDiff
-    name::Symbol
+struct ComposedDiff{T<:AbstractDiff} <: AbstractDiff
+    key::String
     diff::T
 end
 
-Base.isempty((; diff)::FieldDiff) = isempty(diff)
-name((; name)::FieldDiff) = name
-printdiff(io::IO, (; name, diff)::FieldDiff) = print(io, name, ":")
-function printdiff(io::IO, (; name, diff)::FieldDiff{<:AtomicDiff})
-    print(io, name, ": ")
+Base.isempty((; diff)::ComposedDiff) = isempty(diff)
+name((; key)::ComposedDiff) = key
+printdiff(io::IO, (; key, diff)::ComposedDiff) = print(io, key, ":")
+function printdiff(io::IO, (; key, diff)::ComposedDiff{<:AtomicDiff})
+    print(io, key, ": ")
     return printdiff(io, diff)
 end
-AbstractTrees.children((; diff)::FieldDiff) = [diff]
-AbstractTrees.children(::FieldDiff{<:AtomicDiff}) = ()
+AbstractTrees.children((; diff)::ComposedDiff) = [diff]
+AbstractTrees.children(::ComposedDiff{<:AtomicDiff}) = ()
 
 struct FieldsDiff <: AbstractDiff
-    diffs::Vector{FieldDiff}
+    diffs::Vector{ComposedDiff}
 end
 
 Base.isempty((; diffs)::FieldsDiff) = isempty(diffs) || all(isempty, diffs)
@@ -88,30 +88,19 @@ function printdiff(io::IO, (; diffs)::FieldsDiff)
     return printstyled(io, map(name, filter(!isempty, diffs)); color=mismatch_color())
 end
 
-struct ComponentDiff{T<:AbstractDiff} <: AbstractDiff
-    index::Int
-    diff::T
-end
-
-Base.isempty((; diff)::ComponentDiff) = isempty(diff)
-index((; index)::ComponentDiff) = index
-printdiff(io::IO, (; index)::ComponentDiff) = print(io, index, ":")
-function printdiff(io::IO, (; index, diff)::ComponentDiff{<:AtomicDiff})
-    print(io, index, ": ")
-    return printdiff(io, diff)
-end
-AbstractTrees.children((; diff)::ComponentDiff) = [diff]
-AbstractTrees.children((; diff)::ComponentDiff{<:AtomicDiff}) = ()
-
 struct ArrayDiff <: AbstractDiff
-    diffs::Vector{ComponentDiff}
+    diffs::Vector{ComposedDiff}
 end
 
 Base.isempty((; diffs)::ArrayDiff) = isempty(diffs) || all(isempty, diffs)
 AbstractTrees.children((; diffs)::ArrayDiff) = filter(!isempty, diffs)
 function printdiff(io::IO, (; diffs)::ArrayDiff)
     print(io, "components: ")
-    return printstyled(io, map(index, filter(!isempty, diffs)); color=mismatch_color())
+    return printstyled(
+        io,
+        map(Base.Fix1(parse, Int) ∘ name, filter(!isempty, diffs));
+        color=mismatch_color(),
+    )
 end
 
 @kwdef struct StructSummary <: AbstractDiff
