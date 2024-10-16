@@ -62,46 +62,68 @@ end
 Base.first((; x)::BitsDiff) = x
 Base.last((; y)::BitsDiff) = y
 
-struct ComposedDiff{T<:AbstractDiff} <: AbstractDiff
+struct NamedDiff{T<:AbstractDiff} <: AbstractDiff
     key::String
     diff::T
 end
 
-Base.isempty((; diff)::ComposedDiff) = isempty(diff)
-name((; key)::ComposedDiff) = key
-printdiff(io::IO, (; key, diff)::ComposedDiff) = print(io, key, ":")
-function printdiff(io::IO, (; key, diff)::ComposedDiff{<:AtomicDiff})
+Base.isempty((; diff)::NamedDiff) = isempty(diff)
+name((; key)::NamedDiff) = key
+printdiff(io::IO, (; key, diff)::NamedDiff) = print(io, key, ":")
+function printdiff(io::IO, (; key, diff)::NamedDiff{<:AtomicDiff})
     print(io, key, ": ")
     return printdiff(io, diff)
 end
-AbstractTrees.children((; diff)::ComposedDiff) = [diff]
-AbstractTrees.children(::ComposedDiff{<:AtomicDiff}) = ()
+AbstractTrees.children((; diff)::NamedDiff) = [diff]
+AbstractTrees.children(::NamedDiff{<:AtomicDiff}) = ()
 
-struct FieldsDiff <: AbstractDiff
-    diffs::Vector{ComposedDiff}
+abstract type DiffCollection <: AbstractDiff end
+
+vals(diff::DiffCollection) = diff.diffs
+function Base.isempty(diff::DiffCollection)
+    return isempty(vals(diff)) || all(isempty, vals(diff))
+end
+AbstractTrees.children(diff::DiffCollection) = filter(!isempty, vals(diff))
+function printdiff(io::IO, diff::DiffCollection)
+    diff_prefix(io, diff)
+    names = failed_names(diff, map(name, children(diff)))
+    return printstyled(io, names; color=mismatch_color())
+end
+failed_names(::DiffCollection, names::Vector{String}) = names
+
+struct FieldsDiff <: DiffCollection
+    diffs::Vector{NamedDiff}
 end
 
-Base.isempty((; diffs)::FieldsDiff) = isempty(diffs) || all(isempty, diffs)
-AbstractTrees.children((; diffs)::FieldsDiff) = filter(!isempty, diffs)
-function printdiff(io::IO, (; diffs)::FieldsDiff)
-    print(io, "fields: ")
-    return printstyled(io, map(name, filter(!isempty, diffs)); color=mismatch_color())
-end
+diff_prefix(io::IO, ::FieldsDiff) = print(io, "fields: ")
 
 struct ArrayDiff <: AbstractDiff
-    diffs::Vector{ComposedDiff}
+    diffs::Vector{NamedDiff}
+end
+failed_names(::ArrayDiff, names::Vector{String}) = parse.(Int, names)
+
+struct DictDiff <: DiffCollection
+    diffs::Vector{NamedDiff}
 end
 
-Base.isempty((; diffs)::ArrayDiff) = isempty(diffs) || all(isempty, diffs)
-AbstractTrees.children((; diffs)::ArrayDiff) = filter(!isempty, diffs)
-function printdiff(io::IO, (; diffs)::ArrayDiff)
-    print(io, "components: ")
-    return printstyled(
-        io,
-        map(Base.Fix1(parse, Int) ∘ name, filter(!isempty, diffs));
-        color=mismatch_color(),
-    )
+function DictDiff(x::Dict, y::Dict)
+    diffs = NamedDiff[]
+    for k in keys(x)
+        if !haskey(y, k)
+            push!(diffs, NamedDiff(repr(k), BitsDiff(x[k], missing)))
+        else
+            push!(diffs, NamedDiff(repr(k), compare(x[k], y[k])))
+        end
+    end
+    for k in keys(y)
+        k_str = repr(k)
+        if !haskey(x, k)
+            push!(diffs, NamedDiff(k_str, BitsDiff(missing, y[k])))
+        end
+    end
+    return DictDiff(diffs)
 end
+diff_prefix(io::IO, ::DictDiff) = print(io, "keys: ")
 
 @kwdef struct StructSummary <: AbstractDiff
     x::Any
