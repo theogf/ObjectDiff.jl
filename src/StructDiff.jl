@@ -6,31 +6,52 @@ export compare
 
 abstract type AbstractDiff end
 
+abstract type AtomicDiff <: AbstractDiff end
+
+xcolor(::AbstractDiff) = :blue
+ycolor(::AbstractDiff) = :yellow
+mismatch_color() = :red
+
 Base.isempty(::AbstractDiff) = false
 
-struct TypeDiff <: AbstractDiff
+struct TypeDiff <: AtomicDiff
     T1::Type
     T2::Type
 end
 
-AbstractTrees.printnode(io::IO, (; T1, T2)::TypeDiff) = print(io, "type:", T1, " ≠ ", T2)
+function AbstractTrees.printnode(io::IO, diff::TypeDiff)
+    print(io, "type: ")
+    printstyled(io, diff.T1; color=xcolor(diff))
+    print(io, " ≠ ")
+    return printstyled(io, diff.T2; color=ycolor(diff))
+end
 
-struct SizeDiff <: AbstractDiff
+struct SizeDiff <: AtomicDiff
     s1::Tuple
     s2::Tuple
 end
 
-AbstractTrees.printnode(io::IO, (; s1, s2)::SizeDiff) = print(io, "size: $(s1) ≠ $(s2)")
+function AbstractTrees.printnode(io::IO, diff::SizeDiff)
+    print(io, "size: ")
+    printstyled(io, diff.s1; color=xcolor(diff))
+    print(io, " ≠ ")
+    return printstyled(io, diff.s2; color=ycolor(diff))
+end
 
-struct FieldDiff <: AbstractDiff
+struct FieldDiff{T<:AbstractDiff} <: AbstractDiff
     name::Symbol
-    diff::AbstractDiff
+    diff::T
 end
 
 Base.isempty((; diff)::FieldDiff) = isempty(diff)
 name((; name)::FieldDiff) = name
-AbstractTrees.printnode(io::IO, (; name, diff)::FieldDiff) = print(io, "$(name):")
+AbstractTrees.printnode(io::IO, (; name, diff)::FieldDiff) = print(io, name, ":")
+function AbstractTrees.printnode(io::IO, (; name, diff)::FieldDiff{<:AtomicDiff})
+    print(io, name, ": ")
+    return AbstractTrees.printnode(io, diff)
+end
 AbstractTrees.children((; diff)::FieldDiff) = [diff]
+AbstractTrees.children(::FieldDiff{<:AtomicDiff}) = ()
 
 struct FieldsDiff <: AbstractDiff
     diffs::Vector{FieldDiff}
@@ -39,18 +60,24 @@ end
 Base.isempty((; diffs)::FieldsDiff) = isempty(diffs) || all(isempty, diffs)
 AbstractTrees.children((; diffs)::FieldsDiff) = filter(!isempty, diffs)
 function AbstractTrees.printnode(io::IO, (; diffs)::FieldsDiff)
-    return print(io, "Fields $(map(name, filter(!isempty, diffs)))")
+    print(io, "fields: ")
+    return printstyled(io, map(name, filter(!isempty, diffs)); color=mismatch_color())
 end
 
-struct ComponentDiff <: AbstractDiff
+struct ComponentDiff{T<:AbstractDiff} <: AbstractDiff
     index::Int
-    diff::AbstractDiff
+    diff::T
 end
 
 Base.isempty((; diff)::ComponentDiff) = isempty(diff)
 index((; index)::ComponentDiff) = index
-AbstractTrees.printnode(io::IO, (; index, diff)::ComponentDiff) = print(io, index, ":")
+AbstractTrees.printnode(io::IO, (; index)::ComponentDiff) = print(io, index, ":")
+function AbstractTrees.printnode(io::IO, (; index, diff)::ComponentDiff{<:AtomicDiff})
+    print(io, index, ": ")
+    return AbstractTrees.printnode(io, diff)
+end
 AbstractTrees.children((; diff)::ComponentDiff) = [diff]
+AbstractTrees.children((; diff)::ComponentDiff{<:AtomicDiff}) = ()
 
 struct ArrayDiff <: AbstractDiff
     diffs::Vector{ComponentDiff}
@@ -59,7 +86,8 @@ end
 Base.isempty((; diffs)::ArrayDiff) = isempty(diffs) || all(isempty, diffs)
 AbstractTrees.children((; diffs)::ArrayDiff) = filter(!isempty, diffs)
 function AbstractTrees.printnode(io::IO, (; diffs)::ArrayDiff)
-    return print(io, "Array: ", map(index, filter(!isempty, diffs)))
+    print(io, "components: ")
+    return printstyled(io, map(index, filter(!isempty, diffs)); color=mismatch_color())
 end
 
 @kwdef struct StructSummary <: AbstractDiff
@@ -71,11 +99,15 @@ end
 
 Base.isempty((; diffs)::StructSummary) = isempty(diffs) || all(isempty, diffs)
 AbstractTrees.children((; diffs)::StructSummary) = filter(!isempty, diffs)
-function AbstractTrees.printnode(io::IO, (; prefix, x, y)::StructSummary)
-    return print(io, prefix, "$(x) ≠ $(y)")
+function AbstractTrees.printnode(io::IO, diff::StructSummary)
+    (; prefix, x, y) = diff
+    print(io, prefix)
+    printstyled(io, x; color=xcolor(diff))
+    print(io, " ≠ ")
+    return printstyled(io, y; color=ycolor(diff))
 end
 
-struct BitsDiff <: AbstractDiff
+struct BitsDiff <: AtomicDiff
     x::Any
     y::Any
 end
@@ -126,7 +158,11 @@ function compare(x::AbstractArray{T1}, y::AbstractArray{T2}) where {T1,T2}
 end
 
 function Base.show(io::IO, ::MIME"text/plain", diff::AbstractDiff)
-    return print_tree(io, diff)
+    if isempty(diff)
+        println(io, "Objects are equal.")
+    else
+        print_tree(io, diff)
+    end
 end
 
 end
