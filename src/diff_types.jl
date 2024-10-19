@@ -11,7 +11,7 @@ xcolor(::AbstractDiff) = :blue
 ycolor(::AbstractDiff) = :yellow
 mismatch_color() = :red
 
-Base.isempty(::AbstractDiff) = false
+nodiff(::AbstractDiff) = false
 
 abstract type AtomicDiff <: AbstractDiff end
 
@@ -67,7 +67,7 @@ struct NamedDiff{S,T<:AbstractDiff} <: AbstractDiff
     diff::T
 end
 
-Base.isempty((; diff)::NamedDiff) = isempty(diff)
+nodiff((; diff)::NamedDiff) = nodiff(diff)
 name((; key)::NamedDiff) = key
 printdiff(io::IO, (; key, diff)::NamedDiff) = print(io, key, ":")
 function printdiff(io::IO, (; key, diff)::NamedDiff{S,<:AtomicDiff}) where {S}
@@ -80,10 +80,10 @@ AbstractTrees.children(::NamedDiff{S,<:AtomicDiff}) where {S} = ()
 abstract type DiffCollection <: AbstractDiff end
 
 vals(diff::DiffCollection) = diff.diffs
-function Base.isempty(diff::DiffCollection)
-    return isempty(vals(diff)) || all(isempty, vals(diff))
+function nodiff(diff::DiffCollection)
+    return isempty(vals(diff)) || all(nodiff, vals(diff))
 end
-AbstractTrees.children(diff::DiffCollection) = filter(!isempty, vals(diff))
+AbstractTrees.children(diff::DiffCollection) = filter(!nodiff, vals(diff))
 function printdiff(io::IO, diff::DiffCollection)
     diff_prefix(io, diff)
     names = map(name, children(diff))
@@ -131,8 +131,8 @@ diff_prefix(io::IO, ::DictDiff) = print(io, "keys: ")
     prefix::String = ""
 end
 
-Base.isempty((; diffs)::StructSummary) = isempty(diffs) || all(isempty, diffs)
-AbstractTrees.children((; diffs)::StructSummary) = filter(!isempty, diffs)
+nodiff((; diffs)::StructSummary) = isempty(diffs) || all(nodiff, diffs)
+AbstractTrees.children((; diffs)::StructSummary) = filter(!nodiff, diffs)
 function printdiff(io::IO, diff::StructSummary)
     (; prefix, x, y) = diff
     max_length = get(io, :string_length, nothing)

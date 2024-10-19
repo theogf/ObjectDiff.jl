@@ -18,6 +18,10 @@ end
     @testset "Code linting (JET.jl)" begin
         JET.test_package(StructDiff; target_defined_modules=true)
     end
+    @testset "Atomic diffs" begin
+        @test !isempty(compare(1, 2))
+        @test isempty(compare(1, 1))
+    end
     @testset "Compare testing" begin
         x = Foo(Foo(2, 4), 5)
         y = Foo("C", nothing)
@@ -25,3 +29,7 @@ end
     end
     # Write your tests here.
 end
+x = Foo(Foo(2, 4), 5)
+y = Foo("C", nothing)
+z = Foo(Foo(2, 4), nothing)
+compare(x, z)

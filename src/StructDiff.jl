@@ -2,11 +2,10 @@ module StructDiff
 
 using AbstractTrees
 
-export compare
+export compare, nodiff
 
 include("diff_types.jl")
 
-# Write your package code here.
 function compare(x::T1, y::T2) where {T1,T2}
     diffs = AbstractDiff[]
     if isbits(x) && isbits(y)
@@ -24,7 +23,7 @@ function compare(x::T1, y::T2) where {T1,T2}
                 NamedDiff(field, compare(getfield(x, field), getfield(y, field)))
             end
             diff = FieldsDiff(fields)
-            if !isempty(diff)
+            if !nodiff(diff)
                 push!(diffs, diff)
             end
         else
@@ -46,7 +45,7 @@ function compare(x::AbstractArray, y::AbstractArray)
         push!(diffs, SizeDiff(size(x), size(y)))
     else
         fields = ArrayDiff(map(NamedDiff, 1:length(x), vec(map(compare, x, y))))
-        isempty(fields) || push!(diffs, fields)
+        nodiff(fields) || push!(diffs, fields)
     end
     return StructSummary(x, y, diffs, "")
 end
@@ -68,7 +67,7 @@ function compare(d1::AbstractDict, d2::AbstractDict)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", diff::AbstractDiff; maxdepth=10)
-    if isempty(diff)
+    if nodiff(diff)
         printstyled(io, "Objects are equal."; color=:green)
     else
         print_tree(io, diff; maxdepth)
