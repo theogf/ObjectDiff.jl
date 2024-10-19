@@ -62,20 +62,20 @@ end
 Base.first((; x)::BitsDiff) = x
 Base.last((; y)::BitsDiff) = y
 
-struct NamedDiff{T<:AbstractDiff} <: AbstractDiff
-    key::String
+struct NamedDiff{S,T<:AbstractDiff} <: AbstractDiff
+    key::S
     diff::T
 end
 
 Base.isempty((; diff)::NamedDiff) = isempty(diff)
 name((; key)::NamedDiff) = key
 printdiff(io::IO, (; key, diff)::NamedDiff) = print(io, key, ":")
-function printdiff(io::IO, (; key, diff)::NamedDiff{<:AtomicDiff})
+function printdiff(io::IO, (; key, diff)::NamedDiff{S,<:AtomicDiff}) where {S}
     print(io, key, ": ")
     return printdiff(io, diff)
 end
 AbstractTrees.children((; diff)::NamedDiff) = [diff]
-AbstractTrees.children(::NamedDiff{<:AtomicDiff}) = ()
+AbstractTrees.children(::NamedDiff{S,<:AtomicDiff}) where {S} = ()
 
 abstract type DiffCollection <: AbstractDiff end
 
@@ -86,21 +86,21 @@ end
 AbstractTrees.children(diff::DiffCollection) = filter(!isempty, vals(diff))
 function printdiff(io::IO, diff::DiffCollection)
     diff_prefix(io, diff)
-    names = failed_names(diff, map(name, children(diff)))
-    return printstyled(io, names; color=mismatch_color())
+    names = map(name, children(diff))
+    return printstyled(io, join(names, ", "); color=mismatch_color())
 end
-failed_names(::DiffCollection, names::Vector{String}) = names
 
 struct FieldsDiff <: DiffCollection
-    diffs::Vector{NamedDiff}
+    diffs::Vector{<:NamedDiff{Symbol}}
 end
 
 diff_prefix(io::IO, ::FieldsDiff) = print(io, "fields: ")
 
-struct ArrayDiff <: AbstractDiff
-    diffs::Vector{NamedDiff}
+struct ArrayDiff <: DiffCollection
+    diffs::Vector{<:NamedDiff{Int}}
 end
-failed_names(::ArrayDiff, names::Vector{String}) = parse.(Int, names)
+
+diff_prefix(io::IO, ::ArrayDiff) = print(io, "indices: ")
 
 struct DictDiff <: DiffCollection
     diffs::Vector{NamedDiff}
@@ -110,15 +110,14 @@ function DictDiff(x::Dict, y::Dict)
     diffs = NamedDiff[]
     for k in keys(x)
         if !haskey(y, k)
-            push!(diffs, NamedDiff(repr(k), BitsDiff(x[k], missing)))
+            push!(diffs, NamedDiff(k, BitsDiff(x[k], missing)))
         else
-            push!(diffs, NamedDiff(repr(k), compare(x[k], y[k])))
+            push!(diffs, NamedDiff(k, compare(x[k], y[k])))
         end
     end
     for k in keys(y)
-        k_str = repr(k)
         if !haskey(x, k)
-            push!(diffs, NamedDiff(k_str, BitsDiff(missing, y[k])))
+            push!(diffs, NamedDiff(k, BitsDiff(missing, y[k])))
         end
     end
     return DictDiff(diffs)

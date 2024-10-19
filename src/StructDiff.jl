@@ -21,7 +21,7 @@ function compare(x::T1, y::T2) where {T1,T2}
         end
         if fieldnames(T1) == fieldnames(T2)
             fields = map(collect(fieldnames(T1))) do field
-                NamedDiff(repr(field), compare(getfield(x, field), getfield(y, field)))
+                NamedDiff(field, compare(getfield(x, field), getfield(y, field)))
             end
             diff = FieldsDiff(fields)
             if !isempty(diff)
@@ -45,8 +45,7 @@ function compare(x::AbstractArray, y::AbstractArray)
     if size(x) != size(y)
         push!(diffs, SizeDiff(size(x), size(y)))
     else
-        indices = repr.(1:length(x))
-        fields = ArrayDiff(map(NamedDiff, indices, vec(map(compare, x, y))))
+        fields = ArrayDiff(map(NamedDiff, 1:length(x), vec(map(compare, x, y))))
         isempty(fields) || push!(diffs, fields)
     end
     return StructSummary(x, y, diffs, "")
@@ -70,7 +69,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", diff::AbstractDiff; maxdepth=10)
     if isempty(diff)
-        println(io, "Objects are equal.")
+        printstyled(io, "Objects are equal."; color=:green)
     else
         print_tree(io, diff; maxdepth)
     end
