@@ -31,7 +31,7 @@ function Base.show(io::IO, ::MIME"text/plain", diff::AbstractDiff; maxdepth::Int
         print_tree(io, diff; maxdepth)
     end
 end
-g
+
 function truncate_string(s::AbstractString, n::Int)
     if length(s) > n
         s[1:(min(n, end) - 1)] * "…"
