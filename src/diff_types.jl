@@ -1,4 +1,13 @@
+"""
+General abstract representation of a difference between two objects.
+Any `AbstractDiff` type should implement the following:
+- `printdiff(::IO, ::AbstractDiff)` 
+- `nodiff(::AbstractDiff)::Bool` whether there are differences to consider.
 
+Optionally you can implement:
+- `xcolor::Symbol` color of the left object (default `:blue`).
+- `ycolor::Symbol` color of the right object (default `:yellow`).
+"""
 abstract type AbstractDiff end
 
 function AbstractTrees.printnode(io::IO, diff::AbstractDiff)
@@ -13,6 +22,14 @@ mismatch_color() = :red
 
 nodiff(::AbstractDiff) = false
 
+"""
+An `AtomicDiff` is a leaf in the diff tree, i.e. it does not have any children differences.
+`AtomicDiff` subtypes should implement:
+- `Base.first(::AtomicDiff)`: the left element
+- `Base.last(::AtomicDiff)`: the right element
+
+Subtypes can also implement the `diff_prefix(::IO, ::AtomicDiff)` to print some additional prefix.
+"""
 abstract type AtomicDiff <: AbstractDiff end
 
 diff_prefix(::IO, ::AtomicDiff) = nothing
@@ -36,6 +53,7 @@ function printdiff(io::IO, diff::AtomicDiff)
     )
 end
 
+"Representation of different types."
 struct TypeDiff <: AtomicDiff
     T1::Type
     T2::Type
@@ -45,6 +63,7 @@ diff_prefix(io::IO, ::TypeDiff) = print(io, "type: ")
 Base.first((; T1)::TypeDiff) = T1
 Base.last((; T2)::TypeDiff) = T2
 
+"Representation of different sizes."
 struct SizeDiff <: AtomicDiff
     s1::Tuple
     s2::Tuple
@@ -54,6 +73,7 @@ diff_prefix(io::IO, ::SizeDiff) = print(io, "size: ")
 Base.first((; s1)::SizeDiff) = s1
 Base.last((; s2)::SizeDiff) = s2
 
+"Basic representation of different objects, also used as a fallback."
 struct BitsDiff <: AtomicDiff
     x::Any
     y::Any
@@ -62,6 +82,7 @@ end
 Base.first((; x)::BitsDiff) = x
 Base.last((; y)::BitsDiff) = y
 
+"Difference with a specific name indicator. The key can be of all types."
 struct NamedDiff{S,T<:AbstractDiff} <: AbstractDiff
     key::S
     diff::T
@@ -77,6 +98,12 @@ end
 AbstractTrees.children((; diff)::NamedDiff) = [diff]
 AbstractTrees.children(::NamedDiff{S,<:AtomicDiff}) where {S} = ()
 
+"""
+As opposed to [`AtomicDiff`](@ref), `DiffCollection` contains multiple diff objects.
+
+You should implement `vals(::DiffCollection)` to return the unfiltered collection of diff elements.
+Note that it defaults to `getproperty(::DiffCollection, :diffs)`.
+"""
 abstract type DiffCollection <: AbstractDiff end
 
 vals(diff::DiffCollection) = diff.diffs
@@ -90,18 +117,21 @@ function printdiff(io::IO, diff::DiffCollection)
     return printstyled(io, join(names, ", "); color=mismatch_color())
 end
 
+"Collection of fields differences, usually comes from comparing `struct`."
 struct FieldsDiff <: DiffCollection
     diffs::Vector{<:NamedDiff{Symbol}}
 end
 
 diff_prefix(io::IO, ::FieldsDiff) = print(io, "fields: ")
 
+"Collection of array element differences."
 struct ArrayDiff <: DiffCollection
     diffs::Vector{<:NamedDiff{Int}}
 end
 
 diff_prefix(io::IO, ::ArrayDiff) = print(io, "indices: ")
 
+"Collection of comparison of (key, value) pairs."
 struct DictDiff <: DiffCollection
     diffs::Vector{NamedDiff}
 end
