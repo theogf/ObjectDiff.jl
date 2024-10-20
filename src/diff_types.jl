@@ -154,19 +154,15 @@ function DictDiff(x::Dict, y::Dict)
 end
 diff_prefix(io::IO, ::DictDiff) = print(io, "keys: ")
 
-@kwdef struct StructSummary <: AbstractDiff
+struct ObjectDiff <: DiffCollection
     x::Any
     y::Any
-    diffs::Vector{AbstractDiff}
-    prefix::String = ""
+    diffs::Vector{<:AbstractDiff}
 end
 
-nodiff((; diffs)::StructSummary) = isempty(diffs) || all(nodiff, diffs)
-AbstractTrees.children((; diffs)::StructSummary) = filter(!nodiff, diffs)
-function printdiff(io::IO, diff::StructSummary)
-    (; prefix, x, y) = diff
+function printdiff(io::IO, diff::ObjectDiff)
+    (; x, y) = diff
     max_length = get(io, :string_length, nothing)
-    print(io, prefix)
     printstyled(io, truncate_string(repr(x), max_length); color=xcolor(diff))
     print(io, " ≠ ")
     return printstyled(io, truncate_string(repr(y), max_length); color=ycolor(diff))

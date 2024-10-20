@@ -6,6 +6,13 @@ export compare, nodiff
 
 include("diff_types.jl")
 
+"""
+    compare(x, y) -> AbstractDiff
+
+Main functionality of the package. Takes two argument and build a comparison tree that recursively checks
+different aspects of the compared objects.
+The obtained object can be checked for equality with [`nodiff`](@ref).
+"""
 function compare(x::T1, y::T2) where {T1,T2}
     diffs = AbstractDiff[]
     if isbits(x) && isbits(y)
@@ -15,6 +22,7 @@ function compare(x::T1, y::T2) where {T1,T2}
     elseif nameof(T1) != nameof(T2)
         return TypeDiff(T1, T2)
     elseif isstructtype(T1) && isstructtype(T2)
+        diffs = AbstractDiff[]
         if T1 != T2
             push!(diffs, TypeDiff(T1, T2))
         end
@@ -29,9 +37,12 @@ function compare(x::T1, y::T2) where {T1,T2}
         else
             push!(diffs, compare(collect(fieldnames(T1)), collect(fieldnames(T2))))
         end
-    else
+        return ObjectDiff(x, y, diffs)
+    elseif x != y
+        # If we miss all other cases, we just return the comparison as objects
+        return BitsDiff(x, y)
     end
-    return StructSummary(x, y, diffs, "")
+    return ObjectDiff(x, y, AbstractDiff[])
 end
 
 function compare(x::AbstractArray, y::AbstractArray)
@@ -47,7 +58,7 @@ function compare(x::AbstractArray, y::AbstractArray)
         fields = ArrayDiff(map(NamedDiff, 1:length(x), vec(map(compare, x, y))))
         nodiff(fields) || push!(diffs, fields)
     end
-    return StructSummary(x, y, diffs, "")
+    return ObjectDiff(x, y, diffs)
 end
 
 function compare(d1::AbstractDict, d2::AbstractDict)
@@ -63,7 +74,7 @@ function compare(d1::AbstractDict, d2::AbstractDict)
     if d1 != d2
         push!(diffs, DictDiff(d1, d2))
     end
-    return StructSummary(d1, d2, diffs, "")
+    return ObjectDiff(d1, d2, diffs)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", diff::AbstractDiff; maxdepth=10)
