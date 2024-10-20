@@ -11,8 +11,10 @@ Optionally you can implement:
 abstract type AbstractDiff end
 
 function AbstractTrees.printnode(io::IO, diff::AbstractDiff)
+    string_length = get(io, :string_length, 30)
     return printdiff(
-        IOContext(io, :compact => true, :limit => true, :string_length => 30), diff
+        IOContext(io, :compact => true, :limit => true, :string_length => string_length),
+        diff,
     )
 end
 
@@ -29,7 +31,7 @@ function Base.show(io::IO, ::MIME"text/plain", diff::AbstractDiff; maxdepth::Int
         print_tree(io, diff; maxdepth)
     end
 end
-
+g
 function truncate_string(s::AbstractString, n::Int)
     if length(s) > n
         s[1:(min(n, end) - 1)] * "…"
