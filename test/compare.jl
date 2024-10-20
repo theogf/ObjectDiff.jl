@@ -14,13 +14,14 @@ end
     z = Foo(Foo(2, 4), nothing)
     @test !nodiff(compare(x, y))
     @test nodiff(compare(x, x))
+    @test !nodiff(compare(x, z))
     mktemp() do path, io
-        @show path
         redirect_stderr(io) do
             @test_diff x == y broken = true
         end
-        s = String(take!(io))
-        @show s
+        flush(io)
+        s = read(path, String)
         @test contains(s, "type: Foo ≠ String")
+        @test contains(s, "5 ≠ nothing")
     end
 end
