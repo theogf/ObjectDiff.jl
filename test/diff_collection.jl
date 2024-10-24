@@ -1,6 +1,6 @@
 using Test
-using StructDiff
-using StructDiff: AbstractDiff, NamedDiff, FieldsDiff, ArrayDiff, ObjectDiff
+using ObjectDiff
+using ObjectDiff: AbstractDiff, NamedDiff, FieldsDiff, ArrayDiff, ObjectDiff
 
 @testset "DiffCollection" begin
     mime = MIME"text/plain"()

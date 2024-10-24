@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = StructDiff
+CurrentModule = ObjectDiff
 ```
 
-# StructDiff
+# ObjectDiff
 
-Documentation for [StructDiff](https://github.com/theogf/StructDiff.jl).
+Documentation for [ObjectDiff](https://github.com/theogf/ObjectDiff.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [StructDiff]
+Modules = [ObjectDiff]
 ```

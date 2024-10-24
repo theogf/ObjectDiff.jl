@@ -1,4 +1,4 @@
-module StructDiff
+module ObjectDiff
 
 using AbstractTrees
 using Test: @test

@@ -1,14 +1,14 @@
-using StructDiff
+using ObjectDiff
 using Test
 using Aqua
 using JET
 
-@testset "StructDiff.jl" begin
+@testset "ObjectDiff.jl" begin
     @testset "Code quality (Aqua.jl)" begin
-        Aqua.test_all(StructDiff)
+        Aqua.test_all(ObjectDiff)
     end
     @testset "Code linting (JET.jl)" begin
-        JET.test_package(StructDiff; target_defined_modules=true)
+        JET.test_package(ObjectDiff; target_defined_modules=true)
     end
     include("abstract_diff.jl")
     include("atomic_diff.jl")

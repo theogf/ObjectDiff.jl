@@ -1,15 +1,15 @@
-# StructDiff
+# ObjectDiff
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://theogf.github.io/StructDiff.jl/stable/)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://theogf.github.io/StructDiff.jl/dev/)
-[![Build Status](https://github.com/theogf/StructDiff.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/theogf/StructDiff.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://theogf.github.io/ObjectDiff.jl/stable/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://theogf.github.io/ObjectDiff.jl/dev/)
+[![Build Status](https://github.com/theogf/ObjectDiff.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/theogf/ObjectDiff.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 Explain through visuals why two objects do not satisfy `==`.
 
 It can be frustrating for highly nested objects to just find out that `x == y` returns false.
 
-`StructDiff.jl` is an attempt to make the comparison more detailed by going recursively through fields, elements or pairs (depending on the object) and compare different aspects (type, size, content, etc...).
+`ObjectDiff.jl` is an attempt to make the comparison more detailed by going recursively through fields, elements or pairs (depending on the object) and compare different aspects (type, size, content, etc...).
 The main function to use is `compare(x, y)`.
 
 The final object is printed as a tree and instead of showing the first discrepancy that produced `false`, it shows all inconsistencies at once.

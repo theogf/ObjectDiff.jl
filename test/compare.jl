@@ -1,4 +1,4 @@
-using StructDiff
+using ObjectDiff
 using Test
 
 struct Foo

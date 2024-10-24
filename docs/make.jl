@@ -1,23 +1,18 @@
-using StructDiff
+using ObjectDiff
 using Documenter
 
-DocMeta.setdocmeta!(StructDiff, :DocTestSetup, :(using StructDiff); recursive=true)
+DocMeta.setdocmeta!(ObjectDiff, :DocTestSetup, :(using ObjectDiff); recursive=true)
 
 makedocs(;
-    modules=[StructDiff],
+    modules=[ObjectDiff],
     authors="theogf <theo.galyfajou@gmail.com> and contributors",
-    sitename="StructDiff.jl",
+    sitename="ObjectDiff.jl",
     format=Documenter.HTML(;
-        canonical="https://theogf.github.io/StructDiff.jl",
+        canonical="https://theogf.github.io/ObjectDiff.jl",
         edit_link="main",
         assets=String[],
     ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    pages=["Home" => "index.md"],
 )
 
-deploydocs(;
-    repo="github.com/theogf/StructDiff.jl",
-    devbranch="main",
-)
+deploydocs(; repo="github.com/theogf/ObjectDiff.jl", devbranch="main")

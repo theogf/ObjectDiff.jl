@@ -1,6 +1,6 @@
 using Test
-using StructDiff
-using StructDiff: TypeDiff, SizeDiff, BitsDiff
+using ObjectDiff
+using ObjectDiff: TypeDiff, SizeDiff, BitsDiff
 
 @testset "AtomicDiff" begin
     @testset "TypeDiff" begin
