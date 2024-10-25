@@ -71,13 +71,13 @@ function DictDiff(x::Dict, y::Dict)
 end
 diff_prefix(io::IO, ::DictDiff) = print(io, "keys: ")
 
-struct ObjectDiff <: DiffCollection
+struct StructDiff <: DiffCollection
     x::Any
     y::Any
     diffs::Vector{<:AbstractDiff}
 end
 
-function printdiff(io::IO, diff::ObjectDiff)
+function printdiff(io::IO, diff::StructDiff)
     (; x, y) = diff
     max_length = get(io, :string_length, nothing)
     printstyled(io, truncate_string(repr(x), max_length); color=xcolor(diff))

@@ -30,12 +30,12 @@ function compare(x::T1, y::T2) where {T1,T2}
         else
             push!(diffs, compare(collect(fieldnames(T1)), collect(fieldnames(T2))))
         end
-        return ObjectDiff(x, y, diffs)
+        return StructDiff(x, y, diffs)
     elseif x != y
         # If we miss all other cases, we just return the comparison as objects
         return BitsDiff(x, y)
     end
-    return ObjectDiff(x, y, AbstractDiff[])
+    return StructDiff(x, y, AbstractDiff[])
 end
 
 function compare(x::AbstractArray, y::AbstractArray)
@@ -51,7 +51,7 @@ function compare(x::AbstractArray, y::AbstractArray)
         fields = ArrayDiff(map(NamedDiff, 1:length(x), vec(map(compare, x, y))))
         nodiff(fields) || push!(diffs, fields)
     end
-    return ObjectDiff(x, y, diffs)
+    return StructDiff(x, y, diffs)
 end
 
 function compare(d1::AbstractDict, d2::AbstractDict)
@@ -67,5 +67,5 @@ function compare(d1::AbstractDict, d2::AbstractDict)
     if d1 != d2
         push!(diffs, DictDiff(d1, d2))
     end
-    return ObjectDiff(d1, d2, diffs)
+    return StructDiff(d1, d2, diffs)
 end

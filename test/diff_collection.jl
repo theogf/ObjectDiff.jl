@@ -24,10 +24,10 @@ using ObjectDiff: AbstractDiff, NamedDiff, FieldsDiff, ArrayDiff, ObjectDiff
         d = ArrayDiff([NamedDiff(1, atom_d)])
         @test !nodiff(d)
     end
-    @testset "ObjectDiff" begin
-        d = ObjectDiff(x, y, AbstractDiff[])
+    @testset "StructDiff" begin
+        d = StructDiff(x, y, AbstractDiff[])
         @test nodiff(d)
-        d = ObjectDiff(x, y, [atom_d])
+        d = StructDiff(x, y, [atom_d])
         @test !nodiff(d)
     end
 end
