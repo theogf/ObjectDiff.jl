@@ -69,3 +69,11 @@ function compare(d1::AbstractDict, d2::AbstractDict)
     end
     return StructDiff(d1, d2, diffs)
 end
+
+function compare(s1::AbstractString, s2::AbstractString)
+    if contains(s1, '\n') || contains(s2, '\n')
+        StringDiff{Lines}(s1, s2)
+    else
+        StringDiff{Words}(s1, s2)
+    end
+end

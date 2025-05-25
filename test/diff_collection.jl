@@ -1,6 +1,7 @@
 using Test
 using ObjectDiff
-using ObjectDiff: AbstractDiff, NamedDiff, FieldsDiff, ArrayDiff, ObjectDiff, StructDiff
+using ObjectDiff:
+    AbstractDiff, NamedDiff, FieldsDiff, BitsDiff, ArrayDiff, ObjectDiff, StructDiff
 
 @testset "DiffCollection" begin
     mime = MIME"text/plain"()
