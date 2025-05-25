@@ -23,7 +23,7 @@ ycolor(::AbstractDiff) = :yellow
 mismatch_color() = :red
 
 "Indicates if the given `AbstractDiff` object contains actual differences."
-nodiff(::AbstractDiff) = false
+nodiff(::T) where {T<:AbstractDiff} = error("`nodiff` not defined for diff $T")
 function Base.show(io::IO, ::MIME"text/plain", diff::AbstractDiff; maxdepth::Int=10)
     if nodiff(diff)
         printstyled(io, "Objects are equal."; color=:green)

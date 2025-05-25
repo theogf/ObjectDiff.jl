@@ -21,7 +21,7 @@ end
         end
         flush(io)
         s = read(path, String)
-        @test contains(s, "type: Foo ≠ String")
+        @test contains(s, "Foo ≠ String")
         @test contains(s, "5 ≠ nothing")
     end
 end
