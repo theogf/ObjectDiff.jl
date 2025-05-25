@@ -8,6 +8,7 @@ Subtypes can also implement the `diff_prefix(::IO, ::AtomicDiff)` to print some 
 """
 abstract type AtomicDiff <: AbstractDiff end
 
+nodiff(diff::AtomicDiff) = first(diff) == last(diff)
 diff_prefix(::IO, ::AtomicDiff) = nothing
 
 function printdiff(io::IO, diff::AtomicDiff)
