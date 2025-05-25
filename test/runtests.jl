@@ -12,6 +12,7 @@ using JET
     end
     include("abstract_diff.jl")
     include("atomic_diff.jl")
+    include("string_diff.jl")
     include("diff_collection.jl")
     include("compare.jl")
 end
