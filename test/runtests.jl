@@ -5,10 +5,10 @@ using JET
 using SafeTestsets
 
 @testset "ObjectDiff.jl" begin
-    @safetestset "Code quality (Aqua.jl)" begin
+    @testset "Code quality (Aqua.jl)" begin
         Aqua.test_all(ObjectDiff)
     end
-    @safetestset "Code linting (JET.jl)" begin
+    @testset "Code linting (JET.jl)" begin
         JET.test_package(ObjectDiff; target_defined_modules=true)
     end
     @safetestset "abstract_diff" include("abstract_diff.jl")
